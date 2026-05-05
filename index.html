@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="LaCoT: Latent Chain-of-Thought for Visual Reasoning via Amortized Variational Inference">
+  <meta name="keywords" content="LaCoT, Chain-of-Thought, Visual Reasoning, GFlowNets, LVLM, Variational Inference, Bayesian Inference">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LaCoT: Latent Chain-of-Thought for Visual Reasoning</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-light: #dbeafe;
+      --accent-dark: #1d4ed8;
+      --surface: #f8fafc;
+      --surface-warm: #fefce8;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --border: #e2e8f0;
+      --green-light: #dcfce7;
+      --green-dark: #166534;
+      --red-light: #fee2e2;
+      --amber-light: #fef3c7;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-primary);
+    }
+
+    .publication-title {
+      font-family: 'Source Serif 4', serif !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.02em;
+    }
+
+    .title {
+      font-family: 'Source Serif 4', serif !important;
+      color: var(--text-primary);
+    }
+
+    .content p, .content li {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    /* Highlight boxes */
+    .highlight-box {
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      border-left: 4px solid;
+    }
+    .highlight-box.blue {
+      background: var(--accent-light);
+      border-color: var(--accent);
+    }
+    .highlight-box.green {
+      background: var(--green-light);
+      border-color: var(--green-dark);
+    }
+    .highlight-box.amber {
+      background: var(--amber-light);
+      border-color: #d97706;
+    }
+    .highlight-box p {
+      margin-bottom: 0 !important;
+      color: var(--text-primary) !important;
+    }
+    .highlight-box .highlight-label {
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .highlight-box.blue .highlight-label { color: var(--accent-dark); }
+    .highlight-box.green .highlight-label { color: var(--green-dark); }
+    .highlight-box.amber .highlight-label { color: #92400e; }
+
+    /* Contribution cards */
+    .contrib-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      height: 100%;
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .contrib-card:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .contrib-card .contrib-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+    }
+    .contrib-card h4 {
+      font-family: 'DM Sans', sans-serif !important;
+      font-weight: 700 !important;
+      font-size: 1.1rem !important;
+      margin-bottom: 10px !important;
+      color: var(--text-primary);
+    }
+    .contrib-card p {
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    /* Section dividers */
+    .section-divider {
+      width: 60px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+      margin: 0 auto 30px auto;
+    }
+
+    /* Tables */
+    .results-table {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    .results-table table {
+      margin-bottom: 0 !important;
+    }
+    .results-table thead th {
+      background: var(--text-primary) !important;
+      color: white !important;
+      font-weight: 600;
+      font-size: 0.88rem;
+      padding: 14px 16px;
+      border: none !important;
+      text-align: center !important;
+    }
+    .results-table thead th:first-child {
+      text-align: left !important;
+    }
+    .results-table tbody td {
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      border-color: var(--border) !important;
+    }
+    .results-table tbody td:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+    .results-table .ours-row {
+      background: var(--green-light) !important;
+    }
+    .results-table .ours-row td {
+      font-weight: 600;
+      color: var(--green-dark);
+    }
+    .results-table .proprietary-row {
+      background: #f8fafc;
+    }
+    .results-table .separator-row td {
+      padding: 0;
+      height: 3px;
+      background: var(--border);
+    }
+
+    /* Figure caption */
+    .figure-caption {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-top: 10px;
+      line-height: 1.5;
+      max-width: 85%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Method section cards */
+    .method-block {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 32px;
+      margin-bottom: 36px;
+      border: 1px solid var(--border);
+    }
+    .method-block h3 {
+      font-family: 'DM Sans', sans-serif !important;
+      font-weight: 700 !important;
+      font-size: 1.25rem !important;
+      margin-bottom: 16px !important;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .method-block .method-icon {
+      font-size: 1.4rem;
+    }
+
+    /* Stat banner */
+    .stat-banner {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      padding: 30px 0;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-item .stat-number {
+      font-family: 'Source Serif 4', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+    .stat-item .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Image placeholder styling */
+    .figure-placeholder {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .figure-placeholder img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+
+    /* BibTeX */
+    pre {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.85rem !important;
+      border-radius: 12px !important;
+      border: 1px solid var(--border) !important;
+    }
+
+    /* Hero adjustments */
+    .hero.teaser .hero-body {
+      padding-top: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stat-banner { gap: 20px; }
+      .stat-item .stat-number { font-size: 1.6rem; }
+      .contrib-card { margin-bottom: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- ==================== HERO / TITLE SECTION ==================== -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">LaCoT: Latent Chain-of-Thought<br>for Visual Reasoning</h1>
+          <div class="is-size-5 publication-authors" style="margin-top: 16px;">
+            <span class="author-block">
+              <a href="https://github.com/heliossun">Guohao Sun</a><sup>1,2,*</sup>,</span>
+            <span class="author-block">
+              Hang Hua<sup>2,3,+</sup>,</span>
+            <span class="author-block">
+              Jian Wang<sup>2,+</sup>,</span>
+            <span class="author-block">
+              <a href="https://www.cs.rochester.edu/u/jluo/">Jiebo Luo</a><sup>3</sup>,</span>
+            <span class="author-block">
+              Sohail Dianat<sup>1</sup>,</span>
+            <span class="author-block">
+              Majid Rabbani<sup>1</sup>,</span>
+            <span class="author-block">
+              Raghuveer Rao<sup>4</sup>,</span>
+            <span class="author-block">
+              <a href="#">Zhiqiang Tao</a><sup>1</sup></span>
+          </div>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 8px;">
+            <span class="author-block"><sup>1</sup>Rochester Institute of Technology,</span>
+            <span class="author-block"><sup>2</sup>Snap Inc.,</span>
+            <span class="author-block"><sup>3</sup>University of Rochester,</span>
+            <span class="author-block"><sup>4</sup>DEVCOM Army Research Laboratory</span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 6px; color: var(--text-secondary);">
+            <span class="author-block"><sup>*</sup>Work conducted during internship at Snap Inc.</span>
+            &nbsp;&nbsp;
+            <span class="author-block"><sup>+</sup>Equal contribution.</span>
+          </div>
+
+          <!-- Links -->
+          <div class="column has-text-centered" style="margin-top: 12px;">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2510.23925"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2510.23925"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/heliossun/LaCoT"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span>Code</span>
+                </a>
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== TEASER FIGURE ==================== -->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <!-- TODO: Replace with Figure 1 from the paper (PPO vs AVI comparison diagram).
+           Save as: ./static/images/teaser.png -->
+      <div class="figure-placeholder">
+        <img src="./static/images/teaser.png" alt="LaCoT overview: PPO vs AVI policy comparison">
+      </div>
+      <h2 class="subtitle has-text-centered" style="margin-top: 20px; font-size: 1.1rem; line-height: 1.6;">
+        <b>LaCoT</b> reformulates visual chain-of-thought reasoning as probabilistic posterior inference.
+        Unlike PPO, which implicitly approximates the rationale distribution with limited exploration,
+        our AVI-based approach explicitly estimates the true target posterior <i>P(Z|X,Y)</i>,
+        promoting diverse trajectories and inherently preventing reward hacking.
+      </h2>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== KEY NUMBERS BANNER ==================== -->
+<section class="section" style="padding: 20px 0 40px 0;">
+  <div class="container is-max-desktop">
+    <div class="stat-banner">
+      <div class="stat-item">
+        <div class="stat-number">68.4%</div>
+        <div class="stat-label">MathVista (7B)<br>vs. 60.0% GPT-4o</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">+10.6%</div>
+        <div class="stat-label">Over GRPO<br>on MathVista</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">+14pts</div>
+        <div class="stat-label">MathVerse (3B)<br>over base model</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">7</div>
+        <div class="stat-label">Reasoning<br>benchmarks</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== ABSTRACT ==================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="section-divider"></div>
+        <div class="content has-text-justified">
+          <p>
+            Chain-of-thought (CoT) reasoning is critical for improving the interpretability
+            and reliability of Large Vision-Language Models (LVLMs). However, existing
+            training algorithms such as SFT, PPO, and GRPO may not generalize well across
+            unseen reasoning tasks and heavily rely on a biased reward model. To address
+            this challenge, we reformulate reasoning in LVLMs as posterior inference and
+            propose a scalable training algorithm based on amortized variational inference.
+          </p>
+          <p>
+            By leveraging diversity-seeking reinforcement learning algorithms, we introduce a
+            novel sparse reward function for token-level learning signals that encourage diverse,
+            high-likelihood latent CoT, overcoming deterministic sampling limitations and
+            avoiding reward hacking. Additionally, we implement a Bayesian inference-scaling
+            strategy that replaces costly Best-of-N and Beam Search with a marginal likelihood
+            to efficiently rank optimal rationales and answers.
+          </p>
+          <p>
+            We empirically demonstrate that the proposed method enhances the state-of-the-art
+            LVLMs on <b>seven reasoning benchmarks</b>, in terms of effectiveness, generalization,
+            and interpretability. The code is available at
+            <a href="https://github.com/heliossun/LaCoT">github.com/heliossun/LaCoT</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== MOTIVATION ==================== -->
+<section class="section" style="background: var(--surface);">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Why Latent Chain-of-Thought?</h2>
+    <div class="section-divider"></div>
+
+    <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto 30px auto;">
+      <p>
+        Current approaches for training visual reasoning models each have fundamental limitations
+        that prevent them from fully capturing the diversity and quality of reasoning chains:
+      </p>
+    </div>
+
+    <div class="columns">
+      <div class="column is-4">
+        <div class="highlight-box amber">
+          <span class="highlight-label">SFT Limitation</span>
+          <p>
+            Supervised fine-tuning relies on teacher-forced log-likelihood and can only
+            <b>parrot reference traces</b>. It lacks the ability to discover novel reasoning
+            paths, limiting generalization to unseen tasks.
+          </p>
+        </div>
+      </div>
+      <div class="column is-4">
+        <div class="highlight-box amber">
+          <span class="highlight-label">PPO / GRPO Limitation</span>
+          <p>
+            RL methods like PPO and GRPO are <b>constrained by KL penalties</b> that enforce
+            proximity to the SFT baseline, limiting exploration. They also suffer from
+            <b>reward hacking</b> — achieving high scores without genuinely solving problems.
+          </p>
+        </div>
+      </div>
+      <div class="column is-4">
+        <div class="highlight-box blue">
+          <span class="highlight-label">Our Solution</span>
+          <p>
+            LaCoT treats reasoning as a <b>latent variable sampled from a posterior</b>
+            <i>P(Z|X,Y)</i>. Using amortized variational inference via GFlowNets, we
+            train a policy that samples <b>diverse, high-quality</b> reasoning chains
+            proportional to their reward.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== KEY CONTRIBUTIONS ==================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Key Contributions</h2>
+    <div class="section-divider"></div>
+
+    <div class="columns" style="margin-top: 20px;">
+      <div class="column is-4">
+        <div class="contrib-card">
+          <div class="contrib-number">1</div>
+          <h4>Token-level Reward Approximation</h4>
+          <p>
+            GFlowNet training requires token-level rewards, but computing exact rewards for
+            every token in ~1k-token reasoning chains is prohibitive. We propose a
+            <b>linear interpolation strategy</b>: compute actual rewards every &lambda; steps
+            and estimate intermediate rewards, reducing cost while maintaining training quality.
+          </p>
+        </div>
+      </div>
+      <div class="column is-4">
+        <div class="contrib-card">
+          <div class="contrib-number">2</div>
+          <h4>Reference-Guided GFlowNet (RGFN)</h4>
+          <p>
+            Unrestricted exploration causes catastrophic forgetting; KL penalties kill diversity.
+            RGFN filters candidates against a <b>reference rationale</b> — only
+            "better-than-reference" samples reach the gradient. An <b>annealing schedule</b>
+            allows broad exploration early and tightens standards over training.
+          </p>
+        </div>
+      </div>
+      <div class="column is-4">
+        <div class="contrib-card">
+          <div class="contrib-number">3</div>
+          <h4>Bayesian Inference over N Rationales (BiN)</h4>
+          <p>
+            Instead of Best-of-N with a biased reward model, we sample N latent rationales,
+            generate answers, and select the one with the highest <b>length-normalized marginal
+            likelihood</b>. This Bayesian approach is principled, interpretable, and
+            eliminates external critic models.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== METHOD DETAILS ==================== -->
+<section class="section" style="background: var(--surface);">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Method Details</h2>
+    <div class="section-divider"></div>
+
+    <!-- Formulation -->
+    <div class="method-block">
+      <h3><span class="method-icon">🧮</span> Problem Formulation</h3>
+      <div class="content has-text-justified">
+        <p>
+          Given a visual question-answer pair (X, Y), the goal is to find latent CoT sequences Z
+          that contribute the most to the conditional likelihood P(Y|X). Unlike prompting methods
+          that produce a single deterministic reasoning chain, we treat Z as a <b>latent variable
+          sampled from a posterior distribution P(Z|X,Y)</b>. This posterior is intractable to
+          compute directly due to the normalization term, so we use GFlowNets — a class of
+          amortized variational inference methods — to train an autoregressive policy q<sub>&theta;</sub>(Z|X)
+          that approximates this posterior.
+        </p>
+        <p>
+          At convergence, the policy generates reasoning trajectories with probability proportional
+          to their reward, ensuring higher-likelihood rationales are sampled more frequently while
+          still maintaining diversity across the full posterior.
+        </p>
+      </div>
+    </div>
+
+    <!-- Token-level Reward -->
+    <div class="method-block">
+      <h3><span class="method-icon">📊</span> Token-level Marginal Reward Approximation</h3>
+      <div class="content has-text-justified">
+        <p>
+          The Sub-Trajectory Balance (SubTB) objective in GFlowNets requires a reward for every
+          intermediate state (i.e., every token). For long CoT sequences (~1k tokens), computing
+          the full joint log-likelihood R(z<sub>1:t</sub>⊤) = log P(Xz<sub>1:t</sub>Y) at every position is
+          computationally expensive. We leverage a key insight: <b>the log-likelihood reward is
+          locally smooth</b> — it changes gradually between nearby token positions.
+        </p>
+        <p>
+          Based on this, we compute exact rewards at anchor points spaced &lambda; tokens apart and
+          linearly interpolate the intermediate values. Under local smoothness assumptions, the
+          interpolation error decays as O(&lambda;<sup>2</sup>), keeping it negligibly small when
+          &lambda; is moderate (we use &lambda;=8 in all experiments).
+        </p>
+      </div>
+      <!-- TODO: Replace with Figure 2 from the paper (linear interpolation diagram).
+           Save as: ./static/images/reward_interpolation.png -->
+      <div class="has-text-centered" style="margin-top: 20px;">
+        <div class="figure-placeholder">
+          <img src="./static/images/reward_interpolation.png" alt="Token-level reward interpolation strategy">
+        </div>
+        <p class="figure-caption">
+          <b>Figure 2:</b> Within a complete rationale sequence, we compute the actual reward after every
+          &lambda; steps (green dots) and linearly interpolate intermediate rewards (yellow dots),
+          significantly reducing computational overhead.
+        </p>
+      </div>
+    </div>
+
+    <!-- RGFN -->
+    <div class="method-block">
+      <h3><span class="method-icon">🧭</span> Reference-Guided GFlowNet Fine-tuning (RGFN)</h3>
+      <div class="content has-text-justified">
+        <p>
+          Exploration is essential for policy gradient methods, but unrestricted exploration in
+          LVLMs quickly leads to <b>catastrophic forgetting</b> — the model generates fluent but
+          meaningless content with high likelihood and low reward. Traditional fixes like KL
+          penalties or clipped surrogate objectives over-constrain the policy, limiting its
+          ability to discover novel reasoning paths.
+        </p>
+        <p>
+          Our solution is simple but effective: during training, we sample m candidate rationales
+          from the current policy and compare each one against a <b>reference rationale Z<sub>ref</sub></b>
+          (a high-quality CoT from teacher models like GPT-4o or DeepSeek-R1). An indicator
+          function gates the loss:
+        </p>
+        <div class="highlight-box green" style="max-width: 600px; margin: 16px auto;">
+          <p style="text-align: center;">
+            <b>𝕀(Z<sub>i</sub>) = 1</b> if R(Z<sub>i</sub>) > &delta;<sub>s</sub> · R(Z<sub>ref</sub>), &nbsp;&nbsp; <b>0</b> otherwise
+          </p>
+        </div>
+        <p>
+          The annealing coefficient &delta;<sub>s</sub> relaxes the threshold early in training
+          (allowing broad exploration) and tightens it after 50 steps (shifting to exploitation).
+          Only candidates that pass this filter contribute to the gradient, effectively preventing
+          collapse while reducing variance without hand-tuned KL penalties.
+        </p>
+      </div>
+      <!-- TODO: Replace with Figure 3 from the paper (loss / log-likelihood / log-reward curves).
+           Save as: ./static/images/rgfn_curves.png -->
+      <div class="has-text-centered" style="margin-top: 20px;">
+        <div class="figure-placeholder">
+          <img src="./static/images/rgfn_curves.png" alt="RGFN vs unconstrained exploration training curves">
+        </div>
+        <p class="figure-caption">
+          <b>Figure 3:</b> Without constraint (orange), loss decreases but log-likelihood collapses and reward
+          plummets — catastrophic forgetting. With reference-guided exploration (blue), training remains
+          stable with steadily improving reward.
+        </p>
+      </div>
+    </div>
+
+    <!-- BiN -->
+    <div class="method-block">
+      <h3><span class="method-icon">🎯</span> Bayesian Inference over N Latent Rationales (BiN)</h3>
+      <div class="content has-text-justified">
+        <p>
+          Best-of-N (BoN) sampling is widely used at inference time: generate N responses, score
+          them with a reward model, and keep the best. However, BoN has three critical weaknesses:
+          <b>(1)</b> significant computational overhead from the reward model,
+          <b>(2)</b> high dependency on reward model quality, and
+          <b>(3)</b> poor scalability.
+        </p>
+        <p>
+          Our BiN inference strategy eliminates all three issues. The procedure is:
+        </p>
+        <p>
+          <b>Step 1:</b> Sample N latent rationales Z<sub>i</sub> from the trained policy q<sub>&theta;</sub>(Z|X).<br>
+          <b>Step 2:</b> For each Z<sub>i</sub>, generate a corresponding answer Y<sub>i</sub> from the reasoning LVLM &pi;<sub>&Phi;</sub>.<br>
+          <b>Step 3:</b> Compute the joint likelihood &pi;<sub>&Phi;</sub>(Z<sub>i</sub>Y<sub>i</sub>|X) for each pair.<br>
+          <b>Step 4:</b> Estimate the marginal likelihood by normalizing over sequence length |Z<sub>i</sub>Y<sub>i</sub>|.<br>
+          <b>Step 5:</b> Select the answer with the highest estimated marginal likelihood as the final output.
+        </p>
+        <p>
+          By treating rationales as integration variables and ranking answers via length-normalized
+          marginal likelihood, BiN provides a principled, probabilistically justified selection
+          criterion — no external reward model needed.
+        </p>
+      </div>
+      <!-- TODO: Replace with Figure 4 from the paper (BiN inference pipeline).
+           Save as: ./static/images/bin_pipeline.png -->
+      <div class="has-text-centered" style="margin-top: 20px;">
+        <div class="figure-placeholder">
+          <img src="./static/images/bin_pipeline.png" alt="BiN inference pipeline" style="max-width: 400px;">
+        </div>
+        <p class="figure-caption">
+          <b>Figure 4:</b> BiN inference pipeline. Given image query X, sample N latent rationales,
+          generate corresponding answers, and rank by length-normalized marginal likelihood.
+        </p>
+      </div>
+    </div>
+
+    <!-- Training architecture -->
+    <div class="method-block">
+      <h3><span class="method-icon">🏗️</span> Training Architecture</h3>
+      <div class="content has-text-justified">
+        <p>
+          The LaCoT system consists of two models that work together:
+        </p>
+        <p>
+          <b>Reward model / Answer generator (&pi;<sub>&Phi;</sub>):</b> A pre-trained LVLM (Qwen2.5-VL-3B or 7B)
+          fine-tuned with SFT on a mixture of visual reasoning datasets from LLaVA-CoT and
+          R1-Onevision. We introduce a new special token <b>Analyzer</b> in the input format, so the
+          model can selectively provide reasoning steps rather than being forced to reason for
+          every instruction.
+        </p>
+        <p>
+          <b>Rationale sampler (q<sub>&theta;</sub>):</b> Initialized from &pi;<sub>&Phi;</sub> and optimized using
+          LoRA (r=64, &alpha;=128) with the RGFN objective on a focused subset of 3k visual reasoning
+          samples. Teacher-generated CoTs (from GPT-4o or DeepSeek-R1) serve as reference rationales.
+        </p>
+      </div>
+      <!-- TODO: Replace with Figure 5 from the paper (input sequence comparison diagram).
+           Save as: ./static/images/training_architecture.png -->
+      <div class="has-text-centered" style="margin-top: 20px;">
+        <div class="figure-placeholder">
+          <img src="./static/images/training_architecture.png" alt="Input sequence format comparison">
+        </div>
+        <p class="figure-caption">
+          <b>Figure 5:</b> Input sequence comparison. Pre-trained LVLMs answer directly; fine-tuned models
+          always reason via the Assistant role; LaCoT introduces an <b>Analyzer</b> role for optional
+          latent reasoning, keeping the reasoning chain separate and flexible.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ==================== MAIN RESULTS ==================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Main Results</h2>
+    <div class="section-divider"></div>
+
+    <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto 30px auto;">
+      <p>
+        We evaluate LaCoT on seven visual reasoning benchmarks spanning mathematical reasoning
+        (MathVista, MathVision, MathVerse), multi-discipline understanding (MMMU, MMMU-Pro),
+        and general multimodal evaluation (MMVet, MME). Our 7B model is the <b>best open-source LVLM</b>
+        across most benchmarks and narrows the gap to GPT-4o to less than 3 points.
+      </p>
+    </div>
+
+    <div class="results-table" style="margin-bottom: 30px;">
+      <table class="table is-fullwidth">
+        <thead>
+          <tr>
+            <th style="min-width: 160px;">Method</th>
+            <th>MathVista<br><small>mini</small></th>
+            <th>MathVision<br><small>full</small></th>
+            <th>MathVerse<br><small>vis-only</small></th>
+            <th>MMMU<br><small>val</small></th>
+            <th>MMMU-pro<br><small>vision</small></th>
+            <th>MMVet<br><small>test</small></th>
+            <th>MME<br><small>test</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Proprietary -->
+          <tr class="proprietary-row">
+            <td>GPT-4o</td><td>60.0</td><td><b>30.4</b></td><td>40.6</td><td><b>70.7</b></td><td><b>51.9</b></td><td>69.1</td><td>2329</td>
+          </tr>
+          <tr class="proprietary-row">
+            <td>Gemini-1.5-Pro</td><td>63.9</td><td>19.2</td><td>-</td><td>65.8</td><td>46.9</td><td>64.0</td><td>2111</td>
+          </tr>
+          <tr class="proprietary-row">
+            <td>Claude-3.5-Sonnet</td><td>67.7</td><td>-</td><td>46.3</td><td>68.3</td><td>51.5</td><td>66.0</td><td>1920</td>
+          </tr>
+          <tr class="separator-row"><td colspan="8"></td></tr>
+          <!-- 3B models -->
+          <tr>
+            <td>InternVL2-4B</td><td>58.6</td><td>16.5</td><td>32.0</td><td>47.9</td><td>-</td><td>55.7</td><td>2046</td>
+          </tr>
+          <tr>
+            <td>Qwen2.5-VL-3B</td><td>60.3</td><td><u>21.2</u></td><td>26.1</td><td>46.6</td><td>22.4</td><td>61.4</td><td>2134</td>
+          </tr>
+          <tr class="ours-row">
+            <td>LaCoT-Qwen-3B</td><td><b>63.2</b></td><td>20.7</td><td><b>40.0</b></td><td><b>48.8</b></td><td><b>28.9</b></td><td><b>69.6</b></td><td><b>2208</b></td>
+          </tr>
+          <tr class="separator-row"><td colspan="8"></td></tr>
+          <!-- 7B+ models -->
+          <tr>
+            <td>LLaVA-CoT-11B</td><td>52.5</td><td>-</td><td>22.6</td><td>-</td><td>-</td><td>64.9</td><td>-</td>
+          </tr>
+          <tr>
+            <td>LLaVA-OV-7B</td><td>63.2</td><td>11.1</td><td>26.2</td><td>48.8</td><td>24.1</td><td>57.5</td><td>1998</td>
+          </tr>
+          <tr>
+            <td>MiniCPM-V2.6</td><td>60.6</td><td>17.5</td><td>25.7</td><td>49.8</td><td>27.2</td><td>60.0</td><td><u>2348</u></td>
+          </tr>
+          <tr>
+            <td>InternVL2-8B</td><td>58.3</td><td>18.4</td><td>37.0</td><td><u>52.6</u></td><td>25.4</td><td>60.0</td><td>2210</td>
+          </tr>
+          <tr>
+            <td>Qwen2.5-VL-7B</td><td>63.7</td><td><b>25.4</b></td><td><u>38.2</u></td><td>50.0</td><td><u>34.6</u></td><td>70.5</td><td>2333</td>
+          </tr>
+          <tr>
+            <td>R1-Onevision</td><td>64.1</td><td>23.9</td><td>37.8</td><td>47.9</td><td>28.2</td><td><u>71.1</u></td><td>1111</td>
+          </tr>
+          <tr class="ours-row">
+            <td>LaCoT-Qwen-7B</td><td><b>68.4</b></td><td><u>24.9</u></td><td><b>43.3</b></td><td><b>54.9</b></td><td><b>35.3</b></td><td><b>74.2</b></td><td><b>2372</b></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="figure-caption has-text-centered" style="margin-bottom: 40px;">
+      <b>Table 1:</b> Test accuracy (%) on visual reasoning benchmarks.
+      <b>Bold</b> = best among open-source models; <u>underlined</u> = second best.
+      LaCoT-Qwen-3B outperforms all 7B models on MathVerse-Vision-Only (+14pts over its base model).
+    </p>
+
+    <!-- Key takeaways -->
+    <div class="columns">
+      <div class="column">
+        <div class="highlight-box green">
+          <span class="highlight-label">Highlight: 3B Model</span>
+          <p>
+            LaCoT-Qwen-3B surpasses larger models like <b>LLaVA-CoT-11B</b> and
+            <b>LLaVA-OV-7B</b> across multiple benchmarks, demonstrating that
+            learning to sample latent CoT is more effective than simply scaling model size.
+          </p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="highlight-box green">
+          <span class="highlight-label">Highlight: 7B Model</span>
+          <p>
+            LaCoT-Qwen-7B achieves <b>68.4%</b> on MathVista (within 3 points of GPT-4o)
+            and outperforms R1-Onevision (GRPO) by <b>10.6%</b>, showing clear advantages
+            of amortized variational inference over reward maximization.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== ABLATION STUDIES ==================== -->
+<section class="section" style="background: var(--surface);">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Ablation Studies</h2>
+    <div class="section-divider"></div>
+
+    <div class="columns is-centered">
+
+      <!-- Ablation: RGFN effectiveness -->
+      <div class="column is-half">
+        <h3 class="title is-4">Effectiveness of RGFN</h3>
+        <div class="content has-text-justified">
+          <p>
+            We compare RGFN against zero-shot prompting, SFT, and GRPO using Qwen2.5-VL-7B.
+            SFT provides marginal gains but struggles to generalize. GRPO actually hurts
+            performance due to inadequate reward model guidance and limited exploration.
+            RGFN outperforms all baselines by a significant margin.
+          </p>
+        </div>
+        <div class="results-table">
+          <table class="table is-fullwidth">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>MathVista</th>
+                <th>MathVerse</th>
+                <th>MMMU</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Zero-shot</td><td>63.7</td><td>38.2</td><td>50.0</td></tr>
+              <tr><td>SFT</td><td>62.7</td><td>38.7</td><td>50.6</td></tr>
+              <tr><td>GRPO</td><td>62.6</td><td>36.8</td><td>47.9</td></tr>
+              <tr class="ours-row"><td>RGFN (ours)</td><td><b>68.4</b></td><td><b>43.3</b></td><td><b>54.9</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption has-text-centered" style="margin-top: 8px;">
+          <b>Table 3:</b> RGFN vs. baselines using Qwen2.5-VL-7B.
+        </p>
+      </div>
+
+      <!-- Ablation: BiN vs BoN -->
+      <div class="column is-half">
+        <h3 class="title is-4">BiN vs. Best-of-N</h3>
+        <div class="content has-text-justified">
+          <p>
+            Using the same LaCoT policy model, BiN consistently and substantially outperforms
+            BoN — especially on MathVerse where the gap is +18.8 (3B) and +13.2 (7B) points.
+            Both methods use length-normalized log-likelihood with no external reward model.
+          </p>
+        </div>
+        <div class="results-table">
+          <table class="table is-fullwidth">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>MathVerse</th>
+                <th>MathVista</th>
+                <th>MMMU</th>
+                <th>MMVet</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>3B w/ BoN</td><td>21.2</td><td>57.1</td><td>44.7</td><td>67.1</td></tr>
+              <tr class="ours-row"><td>3B w/ BiN</td><td><b>40.0</b></td><td><b>63.2</b></td><td><b>48.8</b></td><td><b>69.6</b></td></tr>
+              <tr><td>7B w/ BoN</td><td>26.5</td><td>62.2</td><td>47.3</td><td>71.2</td></tr>
+              <tr class="ours-row"><td>7B w/ BiN</td><td><b>39.7</b></td><td><b>68.4</b></td><td><b>54.9</b></td><td><b>74.2</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption has-text-centered" style="margin-top: 8px;">
+          <b>Table 2:</b> BiN vs BoN using LaCoT-Qwen (3B/7B).
+        </p>
+      </div>
+    </div>
+
+    <!-- BiN generalizability -->
+    <div style="margin-top: 30px;">
+      <h3 class="title is-4">BiN Generalizes to SFT Models</h3>
+      <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto;">
+        <p>
+          BiN is not limited to LaCoT — it also improves standard SFT models. We apply BiN
+          (N=5, T=0.7) to vanilla Qwen2.5-VL SFT models and observe consistent gains across
+          all benchmarks, confirming its utility as a general inference-scaling strategy.
+        </p>
+      </div>
+      <div style="max-width: 550px; margin: 16px auto 0 auto;">
+        <div class="results-table">
+          <table class="table is-fullwidth">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>MathVista</th>
+                <th>MathVerse</th>
+                <th>MMMU</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>7B (SFT)</td><td>62.7</td><td>38.7</td><td>50.6</td></tr>
+              <tr class="ours-row"><td>7B (SFT) + BiN</td><td><b>64.4</b></td><td><b>38.9</b></td><td><b>51.6</b></td></tr>
+              <tr><td>3B (SFT)</td><td>58.7</td><td>33.3</td><td>43.1</td></tr>
+              <tr class="ours-row"><td>3B (SFT) + BiN</td><td><b>59.4</b></td><td><b>35.2</b></td><td><b>45.0</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption has-text-centered" style="margin-top: 8px;">
+          <b>Table 4:</b> BiN improves SFT models without any additional training.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ==================== DIVERSITY & SCALING ==================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Rationale Diversity & Inference Scaling</h2>
+    <div class="section-divider"></div>
+
+    <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto 20px auto;">
+      <p>
+        A central hypothesis of LaCoT is that sampling rationales with <b>higher diversity</b>
+        increases the probability of finding answers with higher likelihood. We validate this
+        by measuring both diversity (average inter-sentence similarity) and log-likelihood of
+        sampled rationales.
+      </p>
+    </div>
+
+    <div class="columns is-centered" style="margin-bottom: 20px;">
+      <div class="column is-half has-text-centered">
+        <!-- TODO: Replace with Figure 6 from the paper (diversity vs log-likelihood scatter).
+             Save as: ./static/images/diversity_plot.png -->
+        <div class="figure-placeholder">
+          <img src="./static/images/diversity_plot.png" alt="Diversity vs log-likelihood scatter plot">
+        </div>
+        <p class="figure-caption">
+          <b>Figure 6:</b> LaCoT (★) achieves both higher log-likelihood <i>and</i> higher diversity than
+          SFT (●) at both 3B and 7B scales, across different sampling temperatures.
+        </p>
+      </div>
+      <div class="column is-half has-text-centered">
+        <!-- TODO: Replace with Figure 7 from the paper (scaling N and T).
+             Save as: ./static/images/scaling_plot.png -->
+        <div class="figure-placeholder">
+          <img src="./static/images/scaling_plot.png" alt="Effect of N and T on accuracy">
+        </div>
+        <p class="figure-caption">
+          <b>Figure 7:</b> Test accuracy consistently improves with more rationale candidates (N)
+          and higher temperature (T). Going from N=1 to N=5 significantly mitigates hallucination.
+        </p>
+      </div>
+    </div>
+
+    <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto;">
+      <p>
+        Increasing N systematically improves accuracy because it: <b>(i)</b> reduces Monte Carlo variance
+        of the marginal-likelihood estimator (standard error scales as O(1/√N)), <b>(ii)</b> offers broader
+        posterior coverage, mitigating mode-dropping bias, <b>(iii)</b> smooths length-normalization
+        fluctuations, and <b>(iv)</b> enlarges the candidate answer set, elevating the chance that the
+        correct output is observed.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== EFFICIENCY ==================== -->
+<section class="section" style="background: var(--surface);">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Efficiency Analysis</h2>
+    <div class="section-divider"></div>
+
+    <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto 20px auto;">
+      <p>
+        While sampling multiple rationales adds inference cost, LaCoT uses mini-batching
+        (batch size k=5) to generate N rationales in N/k forward passes. Compared to other
+        multi-rationale baselines, LaCoT achieves much stronger performance with comparable or
+        lower inference time.
+      </p>
+    </div>
+
+    <div style="max-width: 650px; margin: 0 auto;">
+      <div class="results-table">
+        <table class="table is-fullwidth">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>#Rationales</th>
+              <th>Time (N=5)</th>
+              <th>Time (N=10)</th>
+              <th>MathVista</th>
+              <th>MathVerse</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>LLaVA-CoT-11B</td><td>-</td><td>340s</td><td>830s</td><td>52.5</td><td>22.6</td></tr>
+            <tr><td>R1-OneVision-7B</td><td>1</td><td>32s</td><td>-</td><td>64.1</td><td>37.8</td></tr>
+            <tr class="ours-row"><td>LaCoT-Qwen-7B</td><td>5–10</td><td>30s</td><td>65s</td><td><b>68.4</b></td><td><b>39.7</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="figure-caption has-text-centered" style="margin-top: 8px;">
+        <b>Table 6:</b> Average per-sample inference time. LaCoT achieves the strongest results with
+        competitive or better inference speed, thanks to efficient mini-batch rationale generation.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== QUALITATIVE RESULTS ==================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Qualitative Results</h2>
+    <div class="section-divider"></div>
+
+    <div class="content has-text-justified" style="max-width: 800px; margin: 0 auto 30px auto;">
+      <p>
+        LaCoT generates more <b>diverse, comprehensive, and accurate</b> reasoning chains compared
+        to SFT and GRPO baselines. In the examples below, both SFT and GRPO produce incorrect
+        visual reasoning that leads to wrong answers, while LaCoT systematically identifies the
+        relevant visual information and arrives at the correct solution.
+      </p>
+      <p>
+        Notably, even when all methods start with similar initial observations, LaCoT's reasoning
+        chain is more thorough — it double-checks visual details, considers alternative
+        interpretations, and explicitly verifies its counting or spatial reasoning before committing
+        to an answer.
+      </p>
+    </div>
+
+    <!-- TODO: Replace with Figure 8 from the paper (baseball counting example).
+         Save as: ./static/images/qualitative_1.png -->
+    <div class="has-text-centered" style="margin-bottom: 30px;">
+      <div class="figure-placeholder">
+        <img src="./static/images/qualitative_1.png" alt="Qualitative comparison: baseball counting">
+      </div>
+      <p class="figure-caption">
+        <b>Figure 8:</b> LaCoT produces a more diverse and comprehensive reasoning chain than GRPO,
+        explicitly verifying each bucket's contents before computing the total.
+      </p>
+    </div>
+
+    <!-- TODO: Replace with Figure F9 from the paper (cube net matching).
+         Save as: ./static/images/qualitative_2.png -->
+    <div class="has-text-centered" style="margin-bottom: 30px;">
+      <div class="figure-placeholder">
+        <img src="./static/images/qualitative_2.png" alt="Qualitative comparison: cube net matching">
+      </div>
+      <p class="figure-caption">
+        <b>Figure F9:</b> On a challenging spatial reasoning task (matching a cube to its unfolded net),
+        both SFT and GRPO produce wrong reasoning. LaCoT correctly identifies the face arrangement
+        and arrives at the right answer.
+      </p>
+    </div>
+
+    <!-- TODO: Replace with Figure F10 from the paper (object subtraction).
+         Save as: ./static/images/qualitative_3.png -->
+    <div class="has-text-centered" style="margin-bottom: 30px;">
+      <div class="figure-placeholder">
+        <img src="./static/images/qualitative_3.png" alt="Qualitative comparison: object subtraction">
+      </div>
+      <p class="figure-caption">
+        <b>Figure F10:</b> LaCoT correctly identifies which objects to remove based on material and color
+        properties, while SFT fails to recognize the red matte block.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== BIBTEX ==================== -->
+<section class="section" style="background: var(--surface);" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title has-text-centered">BibTeX</h2>
+    <div class="section-divider"></div>
+    <pre><code>@article{sun2025lacot,
+  title     = {Latent Chain-of-Thought for Visual Reasoning},
+  author    = {Sun, Guohao and Hua, Hang and Wang, Jian and Luo, Jiebo
+               and Dianat, Sohail and Rabbani, Majid and Rao, Raghuveer
+               and Tao, Zhiqiang},
+  journal   = {arXiv preprint arXiv:2510.23925},
+  year      = {2025},
+}</code></pre>
+  </div>
+</section>
+
+
+<!-- ==================== ACKNOWLEDGMENTS ==================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-4 has-text-centered">Acknowledgments</h2>
+    <div class="content has-text-justified" style="max-width: 700px; margin: 0 auto;">
+      <p>
+        This research was supported in part by the DEVCOM Army Research Laboratory under
+        Contract W911QX-21-D-0001, the National Science Foundation under Grant 2502050,
+        and the National Institutes of Health under Award R16GM159146. The content is solely
+        the responsibility of the authors and does not necessarily represent the official
+        views of the funding agencies.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer" style="padding: 30px 0;">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link" href="https://arxiv.org/pdf/2510.23925" style="margin: 0 8px;">
+        <i class="fas fa-file-pdf" style="font-size: 1.3rem;"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/heliossun/LaCoT" style="margin: 0 8px;">
+        <i class="fab fa-github" style="font-size: 1.3rem;"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered" style="font-size: 0.88rem; color: var(--text-secondary);">
+          <p>
+            This website is based on the
+            <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> project page template,
+            licensed under
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
